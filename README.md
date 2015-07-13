@@ -6,4 +6,4 @@ java -jar caleido.jar
 
 ##Samples
 ![Sample result](https://github.com/thiagoritcher/caleido/blob/master/samples/sample.jpg)
-[See more samples!](samples/)
+[See more samples](samples/)
