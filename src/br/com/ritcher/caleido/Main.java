@@ -218,8 +218,8 @@ public class Main implements ActionListener, MouseListener, ComponentListener, F
 		}
 	}
 	
-	private HashMap<Object, String> fields = new HashMap<>();
-	private HashMap<String, Object> fieldNames = new HashMap<>();
+	private HashMap<Object, String> fields = new HashMap<Object, String>();
+	private HashMap<String, Object> fieldNames = new HashMap<String, Object>();
 	
 	protected void makeField(JToolBar toolbar, String name, String value){
 
@@ -373,7 +373,7 @@ public class Main implements ActionListener, MouseListener, ComponentListener, F
 		}
 	}
 	
-	private HashMap<String, File> userFiles = new HashMap<>(); 
+	private HashMap<String, File> userFiles = new HashMap<String, File>(); 
 	
 	File getFileFromUser(String key, String userText, String extension, boolean newFile){
 		return getFileFromUser(key, userText, extension, newFile, false);
