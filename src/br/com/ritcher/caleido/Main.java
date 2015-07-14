@@ -165,7 +165,7 @@ public class Main implements ActionListener, MouseListener, ComponentListener, F
 		
 		//frame.pack();
 		frame.setSize(frame.getSize());
-		frame.revalidate();
+		frame.invalidate();
 		resizeScrollBar();
 		
 		userFiles = new HashMap<String, File>();
