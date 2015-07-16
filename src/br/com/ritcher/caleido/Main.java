@@ -74,6 +74,7 @@ public class Main implements ActionListener, MouseListener, ComponentListener, F
 		if(args.length > 0){
 			m.abrirArquivo(new File(args[0]));
 		}
+		
 	}
 
 	public void go() {
@@ -83,7 +84,7 @@ public class Main implements ActionListener, MouseListener, ComponentListener, F
 		frame.setVisible(true);
 		frame.setLocationRelativeTo(null);
 		
-		frame.getContentPane().setLayout(new BorderLayout());
+		frame.setLayout(new BorderLayout());
 		
 		scrollPane = new JScrollPane();
 		scrollPane.setPreferredSize(new Dimension(600,600));
@@ -91,7 +92,7 @@ public class Main implements ActionListener, MouseListener, ComponentListener, F
 		desenho = criarDesenho(scrollPane);
 		//scrollPane.add
 		
-		frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
+		frame.add(scrollPane, BorderLayout.CENTER);
 		scrollPane.addComponentListener(this);
 		
 		
