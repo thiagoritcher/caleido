@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<title>Caleido</title>
+<style type="text/css">
+.text_input{
+	width: 50px;
+	font-family: sans-serif;
+	font-size: 13px;
+	margin: 0px 10px 0px 0px;
+}
+.input_label {
+	font-family: sans-serif;
+	font-size: 13px;
+	margin: 0px 3px 0px 0px;
+}
+span.separador {    
+	margin-left: 20px;
+}
+</style>
+</head>
+<body>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-16587543-3', 'auto');
+  ga('send', 'pageview');
+
+</script>
+<script type="text/javascript" >
+var $ = function(id){
+	return document.getElementById(id);
+}
+
+function AcaoAddPonto(){
+	var ponto;
+	var traco;
+	
+	this.fazer = function(){
+		this.traco.add_ponto(this.ponto);
+	};
+	
+	this.desfazer = function(){
+		this.traco.remover_ponto(this.ponto);
+	};
+}
+
+function AcaoAddTraco(){
+	var desenho;
+	var traco, traco_anterior;
+	
+	this.fazer = function(){
+		this.desenho.traco_atual = this.traco;
+		this.desenho.add_traco(this.traco);
+	};
+	
+	this.desfazer = function(){
+		this.desenho.remove_traco(this.traco);
+		this.desenho.traco_atual = this.traco_anterior;
+	};
+}
+
+function Desenho(){
+	this.traco_atual = new Traco();
+	this.raio_atual = 5;
+	this.cor_atual = "#000000";
+	this.cor_fundo = "#ffffff";
+	this.curvas_atuais = [20,20,20,20];
+	this.repeticoes = 16;
+	
+	this.acoes = [];
+	this.acoes_refazer = [];
+	
+	
+	this.container = null;
+	
+	this.tracos = [this.traco_atual];
+	this.draw = function(){
+	    
+		var ctx = this.container.getContext("2d");
+		
+		
+		ctx.fillStyle = this.cor_fundo;
+		ctx.fillRect(0, 0, this.container.width, this.container.height); 
+		
+		var i,j;
+		for(j = 0; j < this.repeticoes; j++){
+			
+			for(i = 0; i < this.tracos.length; i++){
+				this.tracos[i].draw(ctx);
+			}
+		    
+			ctx.translate(this.container.width,0);
+		    ctx.scale(-1, 1);
+		    
+		    for(i = 0; i < this.tracos.length; i++){
+				this.tracos[i].draw(ctx);
+			}
+		    ctx.scale(-1, 1);
+		    ctx.translate(-this.container.width,0);
+		    
+		   
+			ctx.translate(this.container.width/2,this.container.height/2);
+			ctx.rotate(Math.PI*2/this.repeticoes);
+			ctx.translate(-this.container.width/2,-this.container.height/2);
+			
+		}
+	    
+	}
+	
+	this.add_ponto = function(e){
+		var p = new Ponto();
+		var pos = this.relMouseCoords(e);
+		
+		p.x = pos.x;
+		p.y = pos.y;
+		
+		p.raio = this.raio_atual;
+		p.cor = this.cor_atual;
+		p.curvas = this.curvas_atuais.slice(0);
+		
+		var acao = new AcaoAddPonto();
+		acao.ponto = p;
+		acao.traco = this.traco_atual;
+		
+		this.acoes.push(acao);
+		acao.fazer();
+		this.acoes_refazer = [];
+		
+		
+		this.draw();
+	}
+	
+	this.remove_traco = function(p){
+		var index = this.tracos.indexOf(p);
+		this.tracos.splice(index, 1);
+	}
+	
+	this.desfazer = function(){
+		 var acao = this.acoes.pop();
+		 acao.desfazer();
+		 this.acoes_refazer.push(acao);
+		 this.draw();
+	}
+	
+	this.refazer = function(){
+		 var acao = this.acoes_refazer.pop();
+		 acao.fazer();
+		 this.acoes.push(acao);
+		 this.draw();
+	}
+	
+	this.relMouseCoords = function(event){
+	    var rect = event.target.getBoundingClientRect();
+	    var x = event.clientX - rect.left;
+	    var y = event.clientY - rect.top;
+	    
+	    return {x: x, y: y};
+	}
+	
+	this.add_traco = function(t){
+		this.tracos.push(t);
+	}
+	
+	this.add_traco_event = function(e){
+		var acao = new AcaoAddTraco();
+		acao.traco_anterior = this.traco_atual;
+		acao.desenho = this;
+		
+		this.traco_atual = new Traco();
+		acao.traco = this.traco_atual;
+		
+		this.acoes.push(acao);
+		acao.fazer();
+		this.acoes_refazer = [];
+	}
+}
+
+function Traco(){
+	this.pontos = []
+	this.draw = function(ctx){
+		var i;
+		var ultimo, atual;
+		for(i = 0; i < this.pontos.length; i++){
+			atual = this.pontos[i]; 
+			atual.draw(ctx);
+			if(ultimo){
+				ctx.moveTo(ultimo.x, ultimo.y);
+				ctx.bezierCurveTo(ultimo.x + atual.curvas[0], ultimo.y + atual.curvas[1], 
+						atual.x + atual.curvas[2], atual.y + atual.curvas[3], 
+						atual.x, atual.y);
+				
+				//ctx.lineTo(atual.x,atual.y);
+				ctx.strokeStyle = atual.cor;
+				ctx.stroke();
+			}
+			ultimo = this.pontos[i];
+		}
+	}
+	this.add_ponto = function(p){
+		this.pontos.push(p);
+	}
+	
+	this.remover_ponto = function(p){
+		var index = this.pontos.indexOf(p);
+		this.pontos.splice(index, 1);
+	}
+}
+
+function Ponto(){
+	this.x = null;
+	this.y = null;
+	this.raio = null;
+	this.cor = null;
+	
+	this.p2 = 2*Math.PI;
+	
+	this.draw = function(ctx){
+		ctx.beginPath();
+		ctx.arc(this.x, this.y, this.raio, 0, this.p2, false);
+		ctx.fillStyle = this.cor;
+		ctx.fill();
+	}
+}
+
+function Fields(){
+	this.container = document.getElementById('fields');
+	this.fields = [];
+	this.buttons = [];
+	
+	this.create = function(d){
+		this.field('Traco', 'cor', d.cor_atual, 'color');
+		this.field('Fundo', 'fundo', d.cor_fundo, 'color');
+		this.field('Repeticoes', 'repeticoes', d.repeticoes);
+		this.field('Raio', 'raio', d.raio_atual);
+		this.field('CA1', 'ca1', d.curvas_atuais[0]);
+		this.field('CA2', 'ca2', d.curvas_atuais[1]);
+		this.field('CB1', 'cb1', d.curvas_atuais[2]);
+		this.field('CB2', 'cb2', d.curvas_atuais[3]);
+		
+		this.separador();
+		this.button('Traco');
+		this.separador();
+		this.button('Desfazer');
+		this.button('Refazer');
+		
+		for(var i = 0; i < this.buttons.length; i++){
+			var b = $(this.buttons[i]);
+			b.o = this;
+			b.addEventListener('click', this.handler, true);
+		}
+		
+		for(var i = 0; i < this.fields.length; i++){
+			var b = $(this.fields[i]);
+			b.o = this;
+			b.addEventListener('change', this.handler, true);
+		}
+	}
+	
+	this.field = function(label, id, value, tipo){
+		if(!tipo){
+			tipo = 'text';
+		}
+		var html = '<label class="input_label" for="field_'+id+'">'+label+'</label><input type="'+tipo+'" value="'+value+'" name="field_'+id+'" id="field_'+id+'" class="text_input">';
+		this.container.innerHTML += html;
+		
+		var fl = $('field_' + id);
+		this.fields.push('field_' + id);
+		
+		//f.addEventListener('focus', this.act, true);
+	}
+	
+	this.button = function(label){
+		var id = label;
+		var html = '<input type="button" value="'+label+'" id="button_'+id+'" name="'+id+'">';
+		this.container.innerHTML += html;
+		this.buttons.push('button_' + id);
+	}
+	
+	this.handler = function(e){
+		if(this.o.action){
+			this.o.action.call(this.o, this.id)
+		}
+	}
+	
+	this.separador = function(){
+		var html = '<span class="separador"></span>';
+		this.container.innerHTML += html;
+	}
+	
+}
+
+window.onload = function(){
+	var d = new Desenho();
+	document.desenho = d;
+	
+	
+	
+	var c = document.getElementById('cv');
+	//c.width = window.innerWidth;
+	//c.height = window.innerHeight;
+	
+	
+	window.scrollTo(
+     	(c.offsetWidth - window.innerWidth)/2,
+	     (document.documentElement.offsetHeight - window.innerHeight)/2
+	 );
+	
+	d.container = c;
+	
+	c.addEventListener('mouseup', function(e) {
+		if(e.button != 0){
+			return;
+		}
+		document.desenho.add_ponto(e);
+	}, false);
+	
+	
+	var f = new Fields();
+	f.relacoes = {
+		field_cor: 'cor_atual',
+		field_raio: 'raio_atual',
+		field_fundo: 'cor_fundo',
+		field_repeticoes: 'repeticoes',
+		
+		field_ca1: ['curvas_atuais', 0],
+		field_ca2: ['curvas_atuais', 1],
+		field_cb1: ['curvas_atuais', 2],
+		field_cb2: ['curvas_atuais', 3],
+	}
+	f.create(document.desenho);
+	f.action = function(id){
+		
+		var d = document.desenho;
+		var field = this.relacoes[id];
+		
+		if(field){
+			if(Array.isArray(field)){
+				d[field[0]][field[1]] = parseInt($(id).value); 
+			}
+			else {
+				d[field] = $(id).value;
+			}
+		}
+		
+		if(id == 'button_Traco'){
+			var d = document.desenho;
+			d.add_traco_event();
+		}
+		else if(id == 'button_Desfazer'){
+			var d = document.desenho;
+			d.desfazer();
+		}
+		else if(id == 'button_Refazer'){
+			var d = document.desenho;
+			d.refazer();
+		}
+		
+		d.draw();
+		
+	}		
+	document.fields = f;
+	d.draw();
+}
+
+</script>
+<div id="fields" style="position: fixed; background-color: white;"></div>
+<canvas width="2000" height="2000" id="cv"></canvas>
+</body>
+
+</html>
