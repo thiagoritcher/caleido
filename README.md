@@ -1,7 +1,7 @@
-#caleido
+# caleido
 Java app to create imersive and impressive recursive drawings
 
-##Running
+## Running
 java -jar out/caleido.jar or the visit the [javascript version](http://ritcher.com.br/caleido/index.html)
 
 ##Samples
